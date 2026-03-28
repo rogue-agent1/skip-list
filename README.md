@@ -1,7 +1,7 @@
 # skip-list
-Probabilistic skip list data structure. Zero dependencies.
+Skip list implementation — probabilistic sorted data structure. Zero dependencies.
 ## Usage
-```
-python3 skip_list.py demo 30
-python3 skip_list.py bench 100000
+```bash
+python3 skip_list.py 30 --demo
+python3 skip_list.py  # interactive mode
 ```
