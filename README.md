@@ -1,9 +1,11 @@
-# skip-list
+# skip_list
 
-Skip list data structure. Zero-dependency, single-file Python CLI.
+skip_list - Probabilistic skip list with O(log n) search.
+
+Zero-dependency, single-file Python CLI.
 
 ## Usage
 
 ```bash
-python3 skip_list.py --help
+python3 skip_list.py
 ```
