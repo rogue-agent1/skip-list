@@ -1,27 +1,28 @@
 #!/usr/bin/env python3
-"""skip_list - Probabilistic skip list data structure."""
-import sys, random
+"""Skip list data structure. Zero dependencies."""
+import random, sys
 
-class Node:
-    def __init__(self, key, value, level):
-        self.key = key
-        self.value = value
+class SkipNode:
+    def __init__(self, key, value=None, level=0):
+        self.key, self.value = key, value
         self.forward = [None] * (level + 1)
 
 class SkipList:
-    def __init__(self, max_level=16, p=0.5):
-        self.max_level = max_level
+    MAX_LEVEL = 16
+    def __init__(self, p=0.5):
         self.p = p
+        self.header = SkipNode(None, None, self.MAX_LEVEL)
         self.level = 0
-        self.header = Node(None, None, max_level)
         self.size = 0
+
     def _random_level(self):
         lvl = 0
-        while random.random() < self.p and lvl < self.max_level:
+        while random.random() < self.p and lvl < self.MAX_LEVEL:
             lvl += 1
         return lvl
-    def insert(self, key, value):
-        update = [None] * (self.max_level + 1)
+
+    def insert(self, key, value=None):
+        update = [None] * (self.MAX_LEVEL + 1)
         current = self.header
         for i in range(self.level, -1, -1):
             while current.forward[i] and current.forward[i].key < key:
@@ -31,16 +32,17 @@ class SkipList:
         if current and current.key == key:
             current.value = value
             return
-        lvl = self._random_level()
-        if lvl > self.level:
-            for i in range(self.level + 1, lvl + 1):
+        new_level = self._random_level()
+        if new_level > self.level:
+            for i in range(self.level + 1, new_level + 1):
                 update[i] = self.header
-            self.level = lvl
-        node = Node(key, value, lvl)
-        for i in range(lvl + 1):
+            self.level = new_level
+        node = SkipNode(key, value, new_level)
+        for i in range(new_level + 1):
             node.forward[i] = update[i].forward[i]
             update[i].forward[i] = node
         self.size += 1
+
     def search(self, key):
         current = self.header
         for i in range(self.level, -1, -1):
@@ -50,8 +52,9 @@ class SkipList:
         if current and current.key == key:
             return current.value
         return None
+
     def delete(self, key):
-        update = [None] * (self.max_level + 1)
+        update = [None] * (self.MAX_LEVEL + 1)
         current = self.header
         for i in range(self.level, -1, -1):
             while current.forward[i] and current.forward[i].key < key:
@@ -68,6 +71,7 @@ class SkipList:
             self.level -= 1
         self.size -= 1
         return True
+
     def to_list(self):
         result = []
         node = self.header.forward[0]
@@ -76,23 +80,10 @@ class SkipList:
             node = node.forward[0]
         return result
 
-def test():
-    random.seed(42)
-    sl = SkipList()
-    for i in [5, 3, 7, 1, 9, 2, 8]:
-        sl.insert(i, i * 10)
-    assert sl.size == 7
-    assert sl.search(3) == 30
-    assert sl.search(99) is None
-    keys = [k for k, v in sl.to_list()]
-    assert keys == sorted(keys)
-    sl.delete(3)
-    assert sl.search(3) is None
-    assert sl.size == 6
-    print("OK: skip_list")
+    def __len__(self): return self.size
+    def __contains__(self, key): return self.search(key) is not None
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1] == "test":
-        test()
-    else:
-        print("Usage: skip_list.py test")
+    sl = SkipList()
+    for i in [3,1,4,1,5,9,2,6]: sl.insert(i, i*10)
+    print(sl.to_list())

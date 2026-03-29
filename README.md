@@ -1,11 +1,3 @@
-# skip-list
-
-Probabilistic skip list data structure.
-
-## Usage
-
-```bash
-python3 skip_list.py test
-```
-
-Zero dependencies. Python 3.8+.
+# skip_list
+Skip list — probabilistic sorted data structure with O(log n) operations.
+Single-file Python, zero dependencies.
