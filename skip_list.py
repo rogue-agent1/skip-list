@@ -1,80 +1,79 @@
-#!/usr/bin/env python3
-"""skip_list - Probabilistic sorted data structure."""
-import sys, argparse, json, random
+import argparse, random
 
-class SkipNode:
-    def __init__(self, key, value=None, level=0):
+class Node:
+    def __init__(self, key, level):
         self.key = key
-        self.value = value
         self.forward = [None] * (level + 1)
 
 class SkipList:
     def __init__(self, max_level=16, p=0.5):
         self.max_level = max_level
         self.p = p
-        self.header = SkipNode(-float("inf"), None, max_level)
+        self.header = Node(-1, max_level)
         self.level = 0
         self.size = 0
-    def _random_level(self):
+
+    def random_level(self):
         lvl = 0
-        while random.random() < self.p and lvl < self.max_level:
-            lvl += 1
+        while random.random() < self.p and lvl < self.max_level: lvl += 1
         return lvl
-    def insert(self, key, value=None):
+
+    def insert(self, key):
         update = [None] * (self.max_level + 1)
         current = self.header
         for i in range(self.level, -1, -1):
             while current.forward[i] and current.forward[i].key < key:
                 current = current.forward[i]
             update[i] = current
-        current = current.forward[0]
-        if current and current.key == key:
-            current.value = value
-            return
-        lvl = self._random_level()
+        lvl = self.random_level()
         if lvl > self.level:
-            for i in range(self.level + 1, lvl + 1):
-                update[i] = self.header
+            for i in range(self.level + 1, lvl + 1): update[i] = self.header
             self.level = lvl
-        node = SkipNode(key, value, lvl)
+        node = Node(key, lvl)
         for i in range(lvl + 1):
             node.forward[i] = update[i].forward[i]
             update[i].forward[i] = node
         self.size += 1
+
     def search(self, key):
         current = self.header
         for i in range(self.level, -1, -1):
             while current.forward[i] and current.forward[i].key < key:
                 current = current.forward[i]
         current = current.forward[0]
-        return current.value if current and current.key == key else None
-    def to_list(self):
-        result = []
-        node = self.header.forward[0]
-        while node:
-            result.append({"key": node.key, "value": node.value})
-            node = node.forward[0]
-        return result
+        return current and current.key == key
+
+    def display(self):
+        for i in range(self.level + 1):
+            node = self.header.forward[i]
+            keys = []
+            while node:
+                keys.append(str(node.key))
+                node = node.forward[i]
+            print(f"Level {i}: {' -> '.join(keys)}")
 
 def main():
-    p = argparse.ArgumentParser(description="Skip list CLI")
-    p.add_argument("action", choices=["demo", "bench"])
-    p.add_argument("-n", type=int, default=100)
+    p = argparse.ArgumentParser(description="Skip list")
+    p.add_argument("--demo", action="store_true")
+    p.add_argument("--insert", nargs="+", type=int)
+    p.add_argument("--search", type=int)
+    p.add_argument("--seed", type=int, default=42)
     args = p.parse_args()
+    random.seed(args.seed)
     sl = SkipList()
-    if args.action == "demo":
-        for i in range(args.n):
-            sl.insert(i, f"val_{i}")
-        print(json.dumps({"size": sl.size, "levels": sl.level, "sample": sl.to_list()[:10]}, indent=2))
-    elif args.action == "bench":
-        import time
-        t0 = time.time()
-        for i in range(args.n):
-            sl.insert(random.randint(0, args.n * 10), i)
-        t1 = time.time()
-        found = sum(1 for i in range(args.n) if sl.search(i) is not None)
-        t2 = time.time()
-        print(json.dumps({"inserts": args.n, "insert_ms": round((t1-t0)*1000,2), "search_ms": round((t2-t1)*1000,2), "found": found}))
+    if args.demo:
+        for v in [3, 6, 7, 9, 12, 19, 17, 26, 21, 25]:
+            sl.insert(v)
+        sl.display()
+        print(f"\nSearch 19: {sl.search(19)}")
+        print(f"Search 15: {sl.search(15)}")
+        print(f"Size: {sl.size}")
+    elif args.insert:
+        for v in args.insert: sl.insert(v)
+        sl.display()
+        if args.search is not None:
+            print(f"Search {args.search}: {sl.search(args.search)}")
+    else: p.print_help()
 
 if __name__ == "__main__":
     main()
